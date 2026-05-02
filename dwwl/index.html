@@ -76,6 +76,7 @@
       letter-spacing: 0.02em;
     }
 
+    textarea,
     input[type="text"],
     select {
       width: 100%;
@@ -90,12 +91,22 @@
       appearance: none;
     }
 
+    textarea {
+      resize: vertical;
+      min-height: 160px;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+
+    textarea:focus,
     input[type="text"]:focus,
     select:focus {
       outline: none;
       border-color: #4f6ef7;
     }
 
+    textarea::placeholder,
     input[type="text"]::placeholder {
       color: #4a5068;
     }
@@ -319,20 +330,20 @@
   <div class="page-header">
     <a class="back-link" href="/">← Back</a>
     <h1>Darkwater Wishlist</h1>
-    <p class="subtitle">Check which cards from your Moxfield wishlist are available at Darkwater Games</p>
+    <p class="subtitle">Paste your card list in Moxfield format to check availability at Darkwater Games</p>
   </div>
 
   <div class="form-card">
     <form id="wl-form">
       <div class="field">
-        <label for="moxfield-url">Moxfield Wishlist URL</label>
-        <input
-          type="text"
-          id="moxfield-url"
-          placeholder="https://www.moxfield.com/wishlists/..."
+        <label for="card-list">Card List (Moxfield format)</label>
+        <textarea
+          id="card-list"
+          placeholder="1 Lightning Bolt&#10;2 Counterspell [LEA]&#10;1 Black Lotus"
           autocomplete="off"
           spellcheck="false"
-        />
+        ></textarea>
+        <p style="font-size:0.8rem;color:#9099b0;margin-top:0.5rem;">One card per line: <code style="color:#c8d6ff;">1 Card Name [SET]</code> — quantity and set are optional. You can copy &amp; paste directly from Moxfield's export.</p>
       </div>
 
       <div class="field">
@@ -352,7 +363,7 @@
   <div id="results"></div>
 
   <script>
-    const LS_URL_KEY = 'dwwl_moxfield_url';
+    const LS_CARDS_KEY = 'dwwl_card_list';
     const LS_STRICT_KEY = 'dwwl_strict_printing';
     const DW_BASE = 'https://www.darkwatergames.com';
     // CORS proxy used to read Darkwater search results HTML from the browser.
@@ -374,21 +385,21 @@
 
     // ── Restore saved inputs ────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', () => {
-      const savedUrl = localStorage.getItem(LS_URL_KEY);
+      const savedCards = localStorage.getItem(LS_CARDS_KEY);
       const savedStrict = localStorage.getItem(LS_STRICT_KEY);
-      if (savedUrl) document.getElementById('moxfield-url').value = savedUrl;
+      if (savedCards) document.getElementById('card-list').value = savedCards;
       if (savedStrict) document.getElementById('strict-printing').value = savedStrict;
     });
 
     // ── Form submit ─────────────────────────────────────────────────────────
     document.getElementById('wl-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const urlInput = document.getElementById('moxfield-url').value.trim();
+      const cardListInput = document.getElementById('card-list').value.trim();
       const strictSelect = document.getElementById('strict-printing').value;
 
-      if (!urlInput) return;
+      if (!cardListInput) return;
 
-      localStorage.setItem(LS_URL_KEY, urlInput);
+      localStorage.setItem(LS_CARDS_KEY, cardListInput);
       localStorage.setItem(LS_STRICT_KEY, strictSelect);
 
       const strict = strictSelect === 'strict';
@@ -397,7 +408,7 @@
       btn.textContent = 'Checking…';
 
       try {
-        await run(urlInput, strict);
+        await run(cardListInput, strict);
       } finally {
         btn.disabled = false;
         btn.textContent = 'Check Darkwater';
@@ -405,24 +416,14 @@
     });
 
     // ── Main flow ───────────────────────────────────────────────────────────
-    async function run(moxfieldUrl, strict) {
+    async function run(cardListText, strict) {
       const resultsEl = document.getElementById('results');
-      setStatus(resultsEl, 'Loading Moxfield wishlist…');
+      setStatus(resultsEl, 'Parsing card list…');
 
-      let cards;
-      try {
-        const id = parseMoxfieldId(moxfieldUrl);
-        if (!id) throw new Error('Could not find a wishlist or deck ID in that URL.');
-        const isWishlist = /\/wishlists\//i.test(moxfieldUrl);
-        const data = await fetchMoxfield(id, isWishlist);
-        cards = extractCards(data);
-      } catch (err) {
-        setError(resultsEl, err.message);
-        return;
-      }
+      const cards = parseCardList(cardListText);
 
       if (cards.length === 0) {
-        resultsEl.innerHTML = '<p class="empty-msg">The wishlist appears to be empty.</p>';
+        resultsEl.innerHTML = '<p class="empty-msg">No cards found. Please enter at least one card name.</p>';
         return;
       }
 
@@ -457,68 +458,50 @@
       renderResults(resultsEl, allResults);
     }
 
-    // ── Moxfield helpers ────────────────────────────────────────────────────
-    function parseMoxfieldId(url) {
-      const m = url.match(/moxfield\.com\/(?:decks|wishlists)\/([A-Za-z0-9_-]+)/i);
-      return m ? m[1] : null;
-    }
+    // ── Card list parser ────────────────────────────────────────────────────
+    // Supports Moxfield export format and common deck list formats:
+    //   "1 Card Name"
+    //   "1 Card Name [SET]"
+    //   "1 Card Name (SET) #collector"
+    //   "Card Name" (quantity defaults to 1)
+    //   Lines starting with // or # are treated as comments/section headers
+    // Standard MTG set codes are 2–5 alphanumeric characters (e.g. LEA, M21, LTR).
+    const SET_CODE_RE = /[\[\(]([A-Za-z0-9]{2,5})[\]\)]/;
+    // Trailing annotations to strip from the card name after quantity is removed.
+    // Matches [SET], (SET), #collector, *F* foil markers, and anything following them.
+    const TRAILING_ANNOTATION_RE = /\s+(?:[\[\(][A-Za-z0-9]{2,5}[\]\)]|#\S+|\*[A-Z]\*).*$/;
 
-    async function fetchMoxfield(id, isWishlist) {
-      // Try the most likely endpoints in order
-      const endpoints = isWishlist
-        ? [
-            `https://api2.moxfield.com/v2/wishlists/${id}`,
-            `https://api2.moxfield.com/v3/wishlists/${id}`,
-            `https://api2.moxfield.com/v2/decks/all/${id}`,
-          ]
-        : [
-            `https://api2.moxfield.com/v2/decks/all/${id}`,
-            `https://api2.moxfield.com/v3/decks/all/${id}`,
-          ];
-
-      for (const url of endpoints) {
-        try {
-          const resp = await fetch(url, { headers: { Accept: 'application/json' } });
-          if (resp.ok) return resp.json();
-        } catch (_) {
-          // try next
-        }
-      }
-      throw new Error(
-        'Could not load the Moxfield list. Make sure it is set to public and the URL is correct.'
-      );
-    }
-
-    function extractCards(data) {
-      const cards = [];
+    function parseCardList(text) {
       const seen = new Set();
+      const cards = [];
 
-      const addCard = (name, set, setName, quantity) => {
-        if (!name) return;
-        // Deduplicate by name + set using a null byte delimiter to avoid
-        // collisions with card names that contain the delimiter itself
-        const key = `${name}\x00${set || ''}`;
-        if (seen.has(key)) return;
+      for (const rawLine of text.split('\n')) {
+        const line = rawLine.trim();
+        // Skip empty lines and comment/section header lines
+        if (!line || line.startsWith('//') || line.startsWith('#')) continue;
+
+        // Strip optional leading quantity (e.g. "4" or "4x")
+        let rest = line;
+        let quantity = 1;
+        const qtyMatch = rest.match(/^(\d+)x?\s+/);
+        if (qtyMatch) {
+          quantity = parseInt(qtyMatch[1], 10);
+          rest = rest.slice(qtyMatch[0].length);
+        }
+
+        // Extract set code before stripping annotations from the name
+        const setMatch = rest.match(SET_CODE_RE);
+        const set = setMatch ? setMatch[1].toUpperCase() : '';
+
+        // Strip trailing set/collector/foil annotations from card name
+        const name = rest.replace(TRAILING_ANNOTATION_RE, '').trim();
+        if (!name) continue;
+
+        const key = `${name}\x00${set}`;
+        if (seen.has(key)) continue;
         seen.add(key);
-        cards.push({ name, set: (set || '').toUpperCase(), setName: setName || '', quantity: quantity || 1 });
-      };
 
-      // Deck format: data.boards.{boardName}.cards.{entryId} = { quantity, card: {...} }
-      if (data.boards) {
-        for (const board of Object.values(data.boards)) {
-          for (const entry of Object.values(board.cards || {})) {
-            const c = entry.card || {};
-            addCard(c.name, c.set, c.setName, entry.quantity);
-          }
-        }
-      }
-
-      // Wishlist format: data.items = [{ quantity, card: {...} }]
-      if (Array.isArray(data.items)) {
-        for (const item of data.items) {
-          const c = item.card || item;
-          addCard(c.name, c.set, c.setName, item.quantity);
-        }
+        cards.push({ name, set, setName: '', quantity });
       }
 
       return cards;
@@ -526,8 +509,9 @@
 
     // ── Darkwater helpers ───────────────────────────────────────────────────
     async function checkDarkwater(card, strict) {
-      const query = strict && card.setName
-        ? `${card.name} ${card.setName}`
+      const setLabel = card.setName || card.set || '';
+      const query = strict && setLabel
+        ? `${card.name} ${setLabel}`
         : card.name;
 
       const searchUrl = `${DW_BASE}/search?q=${encodeURIComponent(query)}`;
@@ -556,8 +540,9 @@
     }
 
     async function tryShopifySuggest(card, strict) {
-      const query = strict && card.setName
-        ? `${card.name} ${card.setName}`
+      const setLabel = card.setName || card.set || '';
+      const query = strict && setLabel
+        ? `${card.name} ${setLabel}`
         : card.name;
 
       const url =
