@@ -264,7 +264,7 @@
     <div class="layout">
       <section>
         <h1>Sandwich Bite Test</h1>
-        <p class="intro">Move your cursor or tap anywhere on the remaining perimeter to choose the next bite. After eight bites, the path is hashed into a custom sandwich gif.</p>
+        <p class="intro">Move your cursor or tap anywhere on the remaining perimeter to choose the next bite. After eight bites, the path is hashed into a custom sandwich GIF.</p>
 
         <div class="stage-card">
           <div class="sandwich-stage" id="sandwich-stage" aria-label="Top view of a sandwich that accepts bites on the remaining edge">
@@ -301,7 +301,7 @@
         <ol>
           <li>Every click searches for a valid bite that still touches the exposed sandwich edge.</li>
           <li>The bitten area disappears immediately, so new perimeter paths open up after every bite.</li>
-          <li>After eight bites, the bite coordinates are hashed into a replayable sandwich gif.</li>
+          <li>After eight bites, the bite coordinates are hashed into a replayable sandwich GIF.</li>
         </ol>
 
         <div class="status" aria-live="polite">
@@ -313,12 +313,13 @@
 
         <div class="actions">
           <button class="button" type="button" id="reset-button">Reset sandwich</button>
-          <a class="reward-link" id="reward-link" href="sandwich-full-animation.html" hidden>Watch your sandwich gif</a>
+          <a class="reward-link" id="reward-link" href="sandwich-full-animation.html" hidden>Watch your sandwich GIF</a>
         </div>
       </aside>
     </div>
   </main>
 
+  <script src="sandwich-utils.js"></script>
   <script>
     const TOTAL_BITES = 8;
     const BITE_RADIUS = 8;
@@ -327,7 +328,10 @@
     const MIN_OVERLAP_RATIO = 0.22;
     const MAX_OVERLAP_RATIO = 0.72;
     const IDEAL_OVERLAP_RATIO = 0.48;
+    // Keep overlap quality important enough to prefer round, sandwich-shaped bites over distant edge matches.
     const RATIO_PENALTY_WEIGHT = 7;
+    // Leave a little inset so the preview stays inside the stage while still hugging the sandwich edge.
+    const EDGE_CLEARANCE_FACTOR = 0.55;
     const sandwich = { cx: 50, cy: 49, rx: 31, ry: 22 };
 
     const stage = document.getElementById('sandwich-stage');
@@ -373,22 +377,7 @@
       return Math.round(value * 10) / 10;
     }
 
-    function hashString(value) {
-      let hash = 2166136261;
-
-      for (const character of value) {
-        hash ^= character.charCodeAt(0);
-        hash = Math.imul(hash, 16777619);
-      }
-
-      return (hash >>> 0).toString(16).padStart(8, '0');
-    }
-
-    function encodeBites(bites) {
-      return bites
-        .map(({ x, y }) => `${Math.round(x * 10).toString(36)}-${Math.round(y * 10).toString(36)}`)
-        .join('_');
-    }
+    const { hashString, encodeBites } = window.SandwichUtils;
 
     function isInsideRemainingSandwich(x, y) {
       const normalizedX = (x - sandwich.cx) / sandwich.rx;
@@ -424,15 +413,17 @@
       let bestCandidate = null;
 
       for (const offset of biteSearchOffsets) {
-        const candidateX = clamp(x + offset.x, BITE_RADIUS * 0.55, SVG_SIZE - (BITE_RADIUS * 0.55));
-        const candidateY = clamp(y + offset.y, BITE_RADIUS * 0.55, SVG_SIZE - (BITE_RADIUS * 0.55));
+        const candidateX = clamp(x + offset.x, BITE_RADIUS * EDGE_CLEARANCE_FACTOR, SVG_SIZE - (BITE_RADIUS * EDGE_CLEARANCE_FACTOR));
+        const candidateY = clamp(y + offset.y, BITE_RADIUS * EDGE_CLEARANCE_FACTOR, SVG_SIZE - (BITE_RADIUS * EDGE_CLEARANCE_FACTOR));
         const measurement = measureCandidate(candidateX, candidateY);
 
         if (!measurement.isValid) {
           continue;
         }
 
-        const score = Math.hypot(offset.x, offset.y) + Math.abs(measurement.ratio - IDEAL_OVERLAP_RATIO) * RATIO_PENALTY_WEIGHT;
+        const distanceScore = Math.hypot(offset.x, offset.y);
+        const overlapScore = Math.abs(measurement.ratio - IDEAL_OVERLAP_RATIO) * RATIO_PENALTY_WEIGHT;
+        const score = distanceScore + overlapScore;
 
         if (!bestCandidate || score < bestCandidate.score) {
           bestCandidate = {
@@ -493,10 +484,10 @@
         const encodedBites = encodeBites(takenBites);
         const hash = hashString(encodedBites);
         statusTitle.textContent = 'Sandwich finished.';
-        statusCopy.textContent = 'Your perimeter path has been hashed into a sandwich gif.';
+        statusCopy.textContent = 'Your perimeter path has been hashed into a sandwich GIF.';
         hashNote.textContent = `GIF seed #${hash}`;
         rewardLink.href = `sandwich-full-animation.html?bites=${encodeURIComponent(encodedBites)}&hash=${hash}`;
-        rewardLink.textContent = `Watch sandwich gif #${hash}`;
+        rewardLink.textContent = `Watch sandwich GIF #${hash}`;
         rewardLink.hidden = false;
         stage.classList.add('is-finished');
       } else {

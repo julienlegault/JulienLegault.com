@@ -149,8 +149,8 @@
 </head>
 <body>
   <main>
-    <h1>Your Sandwich Gif</h1>
-    <p id="description-copy">This replay is generated from the hashed perimeter bites you picked on the sandwich test.</p>
+    <h1>Your Sandwich GIF</h1>
+    <p id="replay-description">This replay is generated from the hashed perimeter bites you picked on the sandwich test.</p>
     <div class="hash-pill" id="hash-pill">GIF seed</div>
 
     <div class="animation" aria-label="Animated sandwich being eaten">
@@ -178,11 +178,12 @@
     </div>
   </main>
 
+  <script src="sandwich-utils.js"></script>
   <script>
     const DURATION_VARIANCE_RANGE = 2200;
-    const WOBBLE_VARIANCE_MASK = 5;
+    const WOBBLE_VARIANCE_SHIFT = 5;
     const WOBBLE_VARIANCE_RANGE = 3;
-    const HUE_SHIFT_MASK = 3;
+    const HUE_SHIFT_SHIFT = 3;
     const HUE_SHIFT_RANGE = 9;
 
     const DEFAULT_BITES = [
@@ -198,61 +199,22 @@
 
     const biteMarkLayer = document.getElementById('bite-mark-layer');
     const hashPill = document.getElementById('hash-pill');
-    const descriptionCopy = document.getElementById('description-copy');
-
-    function hashString(value) {
-      let hash = 2166136261;
-
-      for (const character of value) {
-        hash ^= character.charCodeAt(0);
-        hash = Math.imul(hash, 16777619);
-      }
-
-      return (hash >>> 0).toString(16).padStart(8, '0');
-    }
-
-    function encodeBites(bites) {
-      return bites
-        .map(({ x, y }) => `${Math.round(x * 10).toString(36)}-${Math.round(y * 10).toString(36)}`)
-        .join('_');
-    }
-
-    function decodeBites(serialized) {
-      if (!serialized) {
-        return [];
-      }
-
-      return serialized
-        .split('_')
-        .map((entry) => {
-          const [rawX, rawY] = entry.split('-');
-          const x = parseInt(rawX, 36) / 10;
-          const y = parseInt(rawY, 36) / 10;
-
-          if (!Number.isFinite(x) || !Number.isFinite(y)) {
-            return null;
-          }
-
-          return {
-            x: Math.min(95, Math.max(5, x)),
-            y: Math.min(95, Math.max(5, y))
-          };
-        })
-        .filter(Boolean);
-    }
+    const replayDescription = document.getElementById('replay-description');
+    const { HASH_PATTERN, hashString, encodeBites, decodeBites } = window.SandwichUtils;
 
     const params = new URLSearchParams(window.location.search);
     const requestedBites = decodeBites(params.get('bites'));
     const bites = requestedBites.length ? requestedBites : DEFAULT_BITES;
     const biteToken = requestedBites.length ? params.get('bites') : encodeBites(DEFAULT_BITES);
-    const hash = params.get('hash') || hashString(biteToken);
-    const seed = parseInt(hash, 16) >>> 0;
+    const requestedHash = params.get('hash');
+    const hash = HASH_PATTERN.test(requestedHash || '') ? requestedHash : hashString(biteToken);
+    const seed = parseInt(hash, 16);
     const duration = 6 + ((seed % DURATION_VARIANCE_RANGE) / 1000);
     const revealWindow = duration * 0.48;
     const biteDelayStep = revealWindow / Math.max(bites.length, 1);
     const glowHue = seed % 360;
-    const wobble = 1 + ((seed >> WOBBLE_VARIANCE_MASK) % WOBBLE_VARIANCE_RANGE);
-    const hueShift = ((seed >> HUE_SHIFT_MASK) % HUE_SHIFT_RANGE) - 4;
+    const wobble = 1 + ((seed >> WOBBLE_VARIANCE_SHIFT) % WOBBLE_VARIANCE_RANGE);
+    const hueShift = ((seed >> HUE_SHIFT_SHIFT) % HUE_SHIFT_RANGE) - 4;
 
     document.documentElement.style.setProperty('--animation-duration', `${duration.toFixed(2)}s`);
     document.documentElement.style.setProperty('--bread-hue', `${hueShift}deg`);
@@ -269,7 +231,7 @@
     });
 
     hashPill.textContent = `GIF seed #${hash}`;
-    descriptionCopy.textContent = `This replay was generated from ${bites.length} hashed perimeter bite${bites.length === 1 ? '' : 's'}.`;
+    replayDescription.textContent = `This replay was generated from ${bites.length} hashed perimeter bite${bites.length === 1 ? '' : 's'}.`;
   </script>
 </body>
 </html>
