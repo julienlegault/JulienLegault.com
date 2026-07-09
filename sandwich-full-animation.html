@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sandwich Animation</title>
   <style>
+    :root {
+      --animation-duration: 7s;
+      --bread-hue: 0deg;
+      --accent-glow: rgba(255, 100, 100, 0.26);
+      --wobble: 2deg;
+    }
+
     *, *::before, *::after {
       box-sizing: border-box;
     }
@@ -37,9 +44,23 @@
 
     p {
       margin: 0 auto 1.5rem;
-      max-width: 34rem;
+      max-width: 36rem;
       color: #b1bdd7;
       line-height: 1.5;
+    }
+
+    .hash-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      padding: 0.45rem 0.9rem;
+      border-radius: 999px;
+      background: rgba(255, 100, 100, 0.14);
+      border: 1px solid rgba(255, 156, 156, 0.35);
+      color: #ffd0d0;
+      font-weight: 600;
+      letter-spacing: 0.02em;
     }
 
     .animation {
@@ -49,6 +70,7 @@
       margin: 0 auto 1.5rem;
       border-radius: 28px;
       overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03), 0 24px 60px var(--accent-glow);
       background:
         radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.18), transparent 22%),
         linear-gradient(180deg, #2b3142, #1a1d27 55%, #151821);
@@ -58,7 +80,17 @@
       width: 100%;
       height: 100%;
       display: block;
-      animation: sandwich-fade 8s ease-in-out infinite;
+      filter: hue-rotate(var(--bread-hue));
+      transform-origin: 50% 50%;
+      animation:
+        sandwich-fade var(--animation-duration) ease-in-out infinite,
+        sandwich-wobble calc(var(--animation-duration) * 0.5) ease-in-out infinite;
+    }
+
+    .bite-mark-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
     }
 
     .bite-mark {
@@ -71,14 +103,9 @@
         radial-gradient(circle at 45% 42%, rgba(0, 0, 0, 0.34) 0 30%, rgba(0, 0, 0, 0.16) 31% 48%, transparent 49%),
         radial-gradient(circle at 50% 50%, #181b24 0 58%, transparent 59%);
       filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.22));
-      animation: bite-sequence 8s ease-in-out infinite;
+      animation: bite-sequence var(--animation-duration) ease-in-out infinite;
+      animation-delay: var(--delay, 0s);
     }
-
-    .bite-mark:nth-child(2) { animation-delay: 0s; }
-    .bite-mark:nth-child(3) { animation-delay: 0.8s; }
-    .bite-mark:nth-child(4) { animation-delay: 1.6s; }
-    .bite-mark:nth-child(5) { animation-delay: 2.4s; }
-    .bite-mark:nth-child(6) { animation-delay: 3.2s; }
 
     .links {
       display: flex;
@@ -111,14 +138,20 @@
 
     @keyframes sandwich-fade {
       0%, 38% { opacity: 1; }
-      52%, 100% { opacity: 0.72; }
+      52%, 100% { opacity: 0.74; }
+    }
+
+    @keyframes sandwich-wobble {
+      0%, 100% { transform: rotate(calc(var(--wobble) * -1)) scale(0.995); }
+      50% { transform: rotate(var(--wobble)) scale(1.01); }
     }
   </style>
 </head>
 <body>
   <main>
-    <h1>Full Sandwich Animation</h1>
-    <p>Here is the full run-through of the sandwich being eaten in sequence. It loops automatically so you can watch the whole progression again.</p>
+    <h1>Your Sandwich Gif</h1>
+    <p id="description-copy">This replay is generated from the hashed perimeter bites you picked on the sandwich test.</p>
+    <div class="hash-pill" id="hash-pill">GIF seed</div>
 
     <div class="animation" aria-label="Animated sandwich being eaten">
       <svg viewBox="0 0 100 100" aria-hidden="true">
@@ -136,11 +169,7 @@
         <path d="M29 58C37 62 63 62 71 58" stroke="#b85e4b" stroke-width="3.2" stroke-linecap="round" />
         <path d="M31 61C39 66 61 66 69 61" stroke="#74b55d" stroke-width="2.6" stroke-linecap="round" />
       </svg>
-      <div class="bite-mark" style="left: 73%; top: 27%;"></div>
-      <div class="bite-mark" style="left: 84%; top: 47%;"></div>
-      <div class="bite-mark" style="left: 70%; top: 71%;"></div>
-      <div class="bite-mark" style="left: 36%; top: 74%;"></div>
-      <div class="bite-mark" style="left: 22%; top: 45%;"></div>
+      <div class="bite-mark-layer" id="bite-mark-layer" aria-hidden="true"></div>
     </div>
 
     <div class="links">
@@ -148,5 +177,93 @@
       <a class="link" href="index.html">Return home</a>
     </div>
   </main>
+
+  <script>
+    const DEFAULT_BITES = [
+      { x: 73, y: 27 },
+      { x: 84, y: 47 },
+      { x: 70, y: 71 },
+      { x: 36, y: 74 },
+      { x: 22, y: 45 },
+      { x: 31, y: 30 },
+      { x: 56, y: 23 },
+      { x: 79, y: 61 }
+    ];
+
+    const biteMarkLayer = document.getElementById('bite-mark-layer');
+    const hashPill = document.getElementById('hash-pill');
+    const descriptionCopy = document.getElementById('description-copy');
+
+    function hashString(value) {
+      let hash = 2166136261;
+
+      for (const character of value) {
+        hash ^= character.charCodeAt(0);
+        hash = Math.imul(hash, 16777619);
+      }
+
+      return (hash >>> 0).toString(16).padStart(8, '0');
+    }
+
+    function encodeBites(bites) {
+      return bites
+        .map(({ x, y }) => `${Math.round(x * 10).toString(36)}-${Math.round(y * 10).toString(36)}`)
+        .join('_');
+    }
+
+    function decodeBites(serialized) {
+      if (!serialized) {
+        return [];
+      }
+
+      return serialized
+        .split('_')
+        .map((entry) => {
+          const [rawX, rawY] = entry.split('-');
+          const x = parseInt(rawX, 36) / 10;
+          const y = parseInt(rawY, 36) / 10;
+
+          if (!Number.isFinite(x) || !Number.isFinite(y)) {
+            return null;
+          }
+
+          return {
+            x: Math.min(95, Math.max(5, x)),
+            y: Math.min(95, Math.max(5, y))
+          };
+        })
+        .filter(Boolean);
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const requestedBites = decodeBites(params.get('bites'));
+    const bites = requestedBites.length ? requestedBites : DEFAULT_BITES;
+    const biteToken = requestedBites.length ? params.get('bites') : encodeBites(DEFAULT_BITES);
+    const hash = params.get('hash') || hashString(biteToken);
+    const seed = parseInt(hash, 16) >>> 0;
+    const duration = 6 + ((seed % 2200) / 1000);
+    const revealWindow = duration * 0.48;
+    const biteDelayStep = revealWindow / Math.max(bites.length, 1);
+    const glowHue = seed % 360;
+    const wobble = 1 + ((seed >> 5) % 3);
+    const hueShift = ((seed >> 3) % 9) - 4;
+
+    document.documentElement.style.setProperty('--animation-duration', `${duration.toFixed(2)}s`);
+    document.documentElement.style.setProperty('--bread-hue', `${hueShift}deg`);
+    document.documentElement.style.setProperty('--accent-glow', `hsla(${glowHue} 80% 68% / 0.24)`);
+    document.documentElement.style.setProperty('--wobble', `${wobble}deg`);
+
+    bites.forEach((bite, index) => {
+      const mark = document.createElement('div');
+      mark.className = 'bite-mark';
+      mark.style.left = `${bite.x}%`;
+      mark.style.top = `${bite.y}%`;
+      mark.style.setProperty('--delay', `${(index * biteDelayStep).toFixed(2)}s`);
+      biteMarkLayer.appendChild(mark);
+    });
+
+    hashPill.textContent = `GIF seed #${hash}`;
+    descriptionCopy.textContent = `This replay was generated from ${bites.length} hashed perimeter bite${bites.length === 1 ? '' : 's'}.`;
+  </script>
 </body>
 </html>
