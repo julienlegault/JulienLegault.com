@@ -333,7 +333,16 @@
     // Leave a little inset so the preview stays inside the stage while still hugging the sandwich edge.
     const EDGE_CLEARANCE_FACTOR = 0.55;
     const SEARCH_RADII = [1.6, 3.2, 4.8, 6.4];
-    const sandwich = { cx: 50, cy: 49, rx: 31, ry: 22 };
+    const SANDWICH_CENTER_X = 50;
+    const SANDWICH_CENTER_Y = 49;
+    const SANDWICH_RADIUS_X = 31;
+    const SANDWICH_RADIUS_Y = 22;
+    const sandwich = {
+      cx: SANDWICH_CENTER_X,
+      cy: SANDWICH_CENTER_Y,
+      rx: SANDWICH_RADIUS_X,
+      ry: SANDWICH_RADIUS_Y
+    };
 
     const stage = document.getElementById('sandwich-stage');
     const biteHoles = document.getElementById('bite-holes');
@@ -558,7 +567,7 @@
       if (!candidate) {
         previewBite = null;
         renderPreview();
-        setTemporaryFeedback('Choose a spot that still touches the remaining sandwich.');
+        setTemporaryFeedback('Click a spot that touches the remaining sandwich edge.');
         return;
       }
 
