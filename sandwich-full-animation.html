@@ -179,6 +179,12 @@
   </main>
 
   <script>
+    const DURATION_VARIANCE_RANGE = 2200;
+    const WOBBLE_VARIANCE_MASK = 5;
+    const WOBBLE_VARIANCE_RANGE = 3;
+    const HUE_SHIFT_MASK = 3;
+    const HUE_SHIFT_RANGE = 9;
+
     const DEFAULT_BITES = [
       { x: 73, y: 27 },
       { x: 84, y: 47 },
@@ -241,12 +247,12 @@
     const biteToken = requestedBites.length ? params.get('bites') : encodeBites(DEFAULT_BITES);
     const hash = params.get('hash') || hashString(biteToken);
     const seed = parseInt(hash, 16) >>> 0;
-    const duration = 6 + ((seed % 2200) / 1000);
+    const duration = 6 + ((seed % DURATION_VARIANCE_RANGE) / 1000);
     const revealWindow = duration * 0.48;
     const biteDelayStep = revealWindow / Math.max(bites.length, 1);
     const glowHue = seed % 360;
-    const wobble = 1 + ((seed >> 5) % 3);
-    const hueShift = ((seed >> 3) % 9) - 4;
+    const wobble = 1 + ((seed >> WOBBLE_VARIANCE_MASK) % WOBBLE_VARIANCE_RANGE);
+    const hueShift = ((seed >> HUE_SHIFT_MASK) % HUE_SHIFT_RANGE) - 4;
 
     document.documentElement.style.setProperty('--animation-duration', `${duration.toFixed(2)}s`);
     document.documentElement.style.setProperty('--bread-hue', `${hueShift}deg`);
