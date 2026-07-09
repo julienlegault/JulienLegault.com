@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sandwich Animation</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 2rem 1.25rem;
+      font-family: system-ui, -apple-system, sans-serif;
+      color: #eef1f8;
+      background: radial-gradient(circle at top, #252b3b, #0f1117 60%);
+    }
+
+    main {
+      width: min(100%, 760px);
+      padding: 2rem;
+      background: rgba(25, 29, 39, 0.94);
+      border: 1px solid #31384a;
+      border-radius: 28px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.28);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 0.75rem;
+      font-size: clamp(2rem, 5vw, 3rem);
+    }
+
+    p {
+      margin: 0 auto 1.5rem;
+      max-width: 34rem;
+      color: #b1bdd7;
+      line-height: 1.5;
+    }
+
+    .animation {
+      position: relative;
+      width: min(100%, 580px);
+      aspect-ratio: 1 / 1;
+      margin: 0 auto 1.5rem;
+      border-radius: 28px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.18), transparent 22%),
+        linear-gradient(180deg, #2b3142, #1a1d27 55%, #151821);
+    }
+
+    .animation svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      animation: sandwich-fade 8s ease-in-out infinite;
+    }
+
+    .bite-mark {
+      position: absolute;
+      width: 16%;
+      aspect-ratio: 1 / 1;
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      background:
+        radial-gradient(circle at 45% 42%, rgba(0, 0, 0, 0.34) 0 30%, rgba(0, 0, 0, 0.16) 31% 48%, transparent 49%),
+        radial-gradient(circle at 50% 50%, #181b24 0 58%, transparent 59%);
+      filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.22));
+      animation: bite-sequence 8s ease-in-out infinite;
+    }
+
+    .bite-mark:nth-child(2) { animation-delay: 0s; }
+    .bite-mark:nth-child(3) { animation-delay: 0.8s; }
+    .bite-mark:nth-child(4) { animation-delay: 1.6s; }
+    .bite-mark:nth-child(5) { animation-delay: 2.4s; }
+    .bite-mark:nth-child(6) { animation-delay: 3.2s; }
+
+    .links {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 2.75rem;
+      padding: 0.8rem 1.15rem;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 600;
+      color: #fff;
+      background: #ff6464;
+    }
+
+    .link.secondary {
+      background: #2d3548;
+    }
+
+    @keyframes bite-sequence {
+      0%, 6% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+      12%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    }
+
+    @keyframes sandwich-fade {
+      0%, 38% { opacity: 1; }
+      52%, 100% { opacity: 0.72; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Full Sandwich Animation</h1>
+    <p>Here is the full run-through of the sandwich being eaten in sequence. It loops automatically so you can watch the whole progression again.</p>
+
+    <div class="animation" aria-label="Animated sandwich being eaten">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <defs>
+          <radialGradient id="bread-full" cx="50%" cy="35%" r="70%">
+            <stop offset="0%" stop-color="#f4d090" />
+            <stop offset="65%" stop-color="#e6b56d" />
+            <stop offset="100%" stop-color="#cb8f4c" />
+          </radialGradient>
+        </defs>
+        <rect width="100" height="100" fill="transparent" />
+        <ellipse cx="50" cy="50" rx="33" ry="24" fill="#815239" opacity="0.28" />
+        <ellipse cx="50" cy="49" rx="31" ry="22" fill="url(#bread-full)" />
+        <path d="M27 44C35 37 65 37 73 44" stroke="#ffe1a9" stroke-width="4" stroke-linecap="round" />
+        <path d="M29 58C37 62 63 62 71 58" stroke="#b85e4b" stroke-width="3.2" stroke-linecap="round" />
+        <path d="M31 61C39 66 61 66 69 61" stroke="#74b55d" stroke-width="2.6" stroke-linecap="round" />
+      </svg>
+      <div class="bite-mark" style="left: 73%; top: 27%;"></div>
+      <div class="bite-mark" style="left: 84%; top: 47%;"></div>
+      <div class="bite-mark" style="left: 70%; top: 71%;"></div>
+      <div class="bite-mark" style="left: 36%; top: 74%;"></div>
+      <div class="bite-mark" style="left: 22%; top: 45%;"></div>
+    </div>
+
+    <div class="links">
+      <a class="link secondary" href="sandwich-bite-test.html">Back to the bite test</a>
+      <a class="link" href="index.html">Return home</a>
+    </div>
+  </main>
+</body>
+</html>

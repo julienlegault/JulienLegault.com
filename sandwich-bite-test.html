@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sandwich Bite Test</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #252b3b, #0f1117 58%);
+      color: #eef1f8;
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 2rem 1.25rem 3rem;
+    }
+
+    main {
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: #9bb4ff;
+      text-decoration: none;
+      margin-bottom: 1.5rem;
+    }
+
+    .layout {
+      display: grid;
+      gap: 2rem;
+      grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+      align-items: start;
+    }
+
+    h1 {
+      margin: 0 0 0.5rem;
+      font-size: clamp(2rem, 5vw, 3rem);
+    }
+
+    .intro {
+      margin: 0 0 1.5rem;
+      color: #b1bdd7;
+      line-height: 1.5;
+      max-width: 38rem;
+    }
+
+    .stage-card,
+    .panel {
+      background: rgba(25, 29, 39, 0.94);
+      border: 1px solid #31384a;
+      border-radius: 24px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.28);
+    }
+
+    .stage-card {
+      padding: 1.5rem;
+    }
+
+    .sandwich-stage {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      width: min(100%, 720px);
+      margin: 0 auto;
+      border-radius: 28px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.18), transparent 22%),
+        linear-gradient(180deg, #2b3142, #1a1d27 55%, #151821);
+    }
+
+    .sandwich-stage svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .bite,
+    .bite-mark {
+      position: absolute;
+      width: 16%;
+      aspect-ratio: 1 / 1;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .bite {
+      border: 0;
+      cursor: pointer;
+      background: rgba(255, 72, 72, 0.2);
+      outline: 3px solid rgba(255, 72, 72, 0.4);
+      transition: transform 0.2s ease, outline-color 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+      opacity: 0.2;
+      pointer-events: none;
+    }
+
+    .bite::before {
+      content: "";
+      position: absolute;
+      inset: 18%;
+      border-radius: 50%;
+      border: 3px dashed rgba(255, 255, 255, 0.2);
+    }
+
+    .bite.is-active {
+      opacity: 1;
+      pointer-events: auto;
+      background: rgba(255, 72, 72, 0.84);
+      outline-color: rgba(255, 176, 176, 0.95);
+      animation: pulse 1.3s ease-in-out infinite;
+      z-index: 3;
+    }
+
+    .bite.is-taken {
+      opacity: 0;
+      pointer-events: none;
+      animation: bite-away 0.45s ease forwards;
+    }
+
+    .bite-mark {
+      opacity: 0;
+      background:
+        radial-gradient(circle at 45% 42%, rgba(0, 0, 0, 0.34) 0 30%, rgba(0, 0, 0, 0.16) 31% 48%, transparent 49%),
+        radial-gradient(circle at 50% 50%, #181b24 0 58%, transparent 59%);
+      filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.22));
+      transform: translate(-50%, -50%) scale(0.55);
+    }
+
+    .bite-mark.is-visible {
+      opacity: 1;
+      animation: mark-in 0.4s ease forwards;
+    }
+
+    .panel {
+      padding: 1.5rem;
+    }
+
+    .panel h2 {
+      margin: 0 0 1rem;
+      font-size: 1.2rem;
+    }
+
+    .panel p,
+    .panel li {
+      color: #b1bdd7;
+      line-height: 1.5;
+    }
+
+    .panel ol {
+      margin: 0;
+      padding-left: 1.2rem;
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .status {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 16px;
+      background: #11141c;
+      border: 1px solid #2d3444;
+    }
+
+    .status strong {
+      display: block;
+      margin-bottom: 0.4rem;
+      color: #fff;
+    }
+
+    .progress {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+
+    .progress-dot {
+      width: 0.9rem;
+      height: 0.9rem;
+      border-radius: 50%;
+      background: #394056;
+      border: 1px solid #56607d;
+    }
+
+    .progress-dot.is-done {
+      background: #ff6464;
+      border-color: #ff9c9c;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+
+    .button,
+    .reward-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 2.75rem;
+      border-radius: 999px;
+      padding: 0.8rem 1.15rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform 0.15s ease, background 0.2s ease;
+    }
+
+    .button {
+      border: 0;
+      cursor: pointer;
+      background: #2d3548;
+      color: #eef1f8;
+    }
+
+    .button:hover,
+    .button:focus-visible,
+    .reward-link:hover,
+    .reward-link:focus-visible {
+      transform: translateY(-1px);
+    }
+
+    .reward-link {
+      background: #ff6464;
+      color: #fff;
+    }
+
+    .reward-link[hidden] {
+      display: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.08); }
+    }
+
+    @keyframes bite-away {
+      0% { transform: translate(-50%, -50%) scale(1); }
+      100% { transform: translate(-50%, -50%) scale(0.18); }
+    }
+
+    @keyframes mark-in {
+      0% { transform: translate(-50%, -50%) scale(0.45); }
+      100% { transform: translate(-50%, -50%) scale(1); }
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="back-link" href="index.html">← Back to home</a>
+    <div class="layout">
+      <section>
+        <h1>Sandwich Bite Test</h1>
+        <p class="intro">Tap the highlighted bite in order to show how you would eat the sandwich. Each red target disappears after the bite animation, and the full-sandwich animation unlocks once the meal is gone.</p>
+
+        <div class="stage-card">
+          <div class="sandwich-stage" aria-label="Top view of a sandwich with bite targets">
+            <svg viewBox="0 0 100 100" aria-hidden="true">
+              <defs>
+                <radialGradient id="bread" cx="50%" cy="35%" r="70%">
+                  <stop offset="0%" stop-color="#f4d090" />
+                  <stop offset="65%" stop-color="#e6b56d" />
+                  <stop offset="100%" stop-color="#cb8f4c" />
+                </radialGradient>
+              </defs>
+              <rect width="100" height="100" fill="transparent" />
+              <ellipse cx="50" cy="50" rx="33" ry="24" fill="#815239" opacity="0.28" />
+              <ellipse cx="50" cy="49" rx="31" ry="22" fill="url(#bread)" />
+              <path d="M27 44C35 37 65 37 73 44" stroke="#ffe1a9" stroke-width="4" stroke-linecap="round" />
+              <path d="M29 58C37 62 63 62 71 58" stroke="#b85e4b" stroke-width="3.2" stroke-linecap="round" />
+              <path d="M31 61C39 66 61 66 69 61" stroke="#74b55d" stroke-width="2.6" stroke-linecap="round" />
+            </svg>
+            <div class="bite-mark" data-bite-mark="0" style="left: 73%; top: 27%;"></div>
+            <div class="bite-mark" data-bite-mark="1" style="left: 84%; top: 47%;"></div>
+            <div class="bite-mark" data-bite-mark="2" style="left: 70%; top: 71%;"></div>
+            <div class="bite-mark" data-bite-mark="3" style="left: 36%; top: 74%;"></div>
+            <div class="bite-mark" data-bite-mark="4" style="left: 22%; top: 45%;"></div>
+            <button class="bite" data-bite="0" style="left: 73%; top: 27%;" aria-label="Take bite 1"></button>
+            <button class="bite" data-bite="1" style="left: 84%; top: 47%;" aria-label="Take bite 2"></button>
+            <button class="bite" data-bite="2" style="left: 70%; top: 71%;" aria-label="Take bite 3"></button>
+            <button class="bite" data-bite="3" style="left: 36%; top: 74%;" aria-label="Take bite 4"></button>
+            <button class="bite" data-bite="4" style="left: 22%; top: 45%;" aria-label="Take bite 5"></button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <h2>How it works</h2>
+        <ol>
+          <li>Only one bite is live at a time, shown with a bright red target.</li>
+          <li>Click the active target to play the bite animation and reveal the missing chunk.</li>
+          <li>Finish all five bites to unlock the full sandwich-eating animation.</li>
+        </ol>
+
+        <div class="status" aria-live="polite">
+          <strong id="status-title">Start with the top-right corner.</strong>
+          <span id="status-copy">5 bites left.</span>
+          <div class="progress" id="progress" aria-hidden="true"></div>
+        </div>
+
+        <div class="actions">
+          <button class="button" type="button" id="reset-button">Reset sandwich</button>
+          <a class="reward-link" id="reward-link" href="sandwich-full-animation.html" hidden>Watch the full sandwich animation</a>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const bites = Array.from(document.querySelectorAll('[data-bite]'));
+    const biteMarks = Array.from(document.querySelectorAll('[data-bite-mark]'));
+    const progress = document.getElementById('progress');
+    const statusTitle = document.getElementById('status-title');
+    const statusCopy = document.getElementById('status-copy');
+    const rewardLink = document.getElementById('reward-link');
+    const resetButton = document.getElementById('reset-button');
+    const biteMessages = [
+      'Start with the top-right corner.',
+      'Now move to the right edge.',
+      'Next, take the bottom-right bite.',
+      'Keep going with the bottom-left side.',
+      'Finish on the left edge.'
+    ];
+    let activeIndex = 0;
+
+    function renderProgress() {
+      progress.innerHTML = '';
+
+      bites.forEach((_, index) => {
+        const dot = document.createElement('span');
+        dot.className = 'progress-dot';
+        if (index < activeIndex) {
+          dot.classList.add('is-done');
+        }
+        progress.appendChild(dot);
+      });
+    }
+
+    function updateState() {
+      bites.forEach((bite, index) => {
+        bite.classList.toggle('is-active', index === activeIndex);
+      });
+
+      if (activeIndex >= bites.length) {
+        statusTitle.textContent = 'Sandwich finished.';
+        statusCopy.textContent = 'Every bite has been taken.';
+        rewardLink.hidden = false;
+      } else {
+        statusTitle.textContent = biteMessages[activeIndex];
+        statusCopy.textContent = `${bites.length - activeIndex} bites left.`;
+        rewardLink.hidden = true;
+      }
+
+      renderProgress();
+    }
+
+    bites.forEach((bite, index) => {
+      bite.addEventListener('click', () => {
+        if (index !== activeIndex) {
+          return;
+        }
+
+        bite.classList.remove('is-active');
+        bite.classList.add('is-taken');
+        biteMarks[index].classList.add('is-visible');
+        activeIndex += 1;
+        window.setTimeout(updateState, 220);
+      });
+    });
+
+    resetButton.addEventListener('click', () => {
+      activeIndex = 0;
+      bites.forEach((bite) => {
+        bite.classList.remove('is-active', 'is-taken');
+      });
+      biteMarks.forEach((mark) => {
+        mark.classList.remove('is-visible');
+      });
+      updateState();
+    });
+
+    updateState();
+  </script>
+</body>
+</html>
