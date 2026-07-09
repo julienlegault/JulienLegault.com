@@ -332,6 +332,7 @@
     const RATIO_PENALTY_WEIGHT = 7;
     // Leave a little inset so the preview stays inside the stage while still hugging the sandwich edge.
     const EDGE_CLEARANCE_FACTOR = 0.55;
+    const SEARCH_RADII = [1.6, 3.2, 4.8, 6.4];
     const sandwich = { cx: 50, cy: 49, rx: 31, ry: 22 };
 
     const stage = document.getElementById('sandwich-stage');
@@ -359,7 +360,8 @@
       }
     }
 
-    for (const radius of [1.6, 3.2, 4.8, 6.4]) {
+    // Expand outward in bite-sized steps so rough clicks still snap to the nearest valid perimeter bite.
+    for (const radius of SEARCH_RADII) {
       for (let index = 0; index < 12; index += 1) {
         const angle = (index / 12) * Math.PI * 2;
         biteSearchOffsets.push({
@@ -422,6 +424,7 @@
         }
 
         const distanceScore = Math.hypot(offset.x, offset.y);
+        // Distance stays within a few SVG units, so this overlap penalty is scaled to that same range for tie-breaking.
         const overlapScore = Math.abs(measurement.ratio - IDEAL_OVERLAP_RATIO) * RATIO_PENALTY_WEIGHT;
         const score = distanceScore + overlapScore;
 

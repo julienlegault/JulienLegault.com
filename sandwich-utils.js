@@ -1,5 +1,7 @@
 (function () {
   const HASH_PATTERN = /^[0-9a-f]{8}$/i;
+  // Tenths keep the URL short while preserving the same visual precision used by the bite stage.
+  const ENCODE_SCALE = 10;
 
   function hashString(value) {
     // 32-bit FNV-1a: offset basis 2166136261 and prime 16777619 keep the short bite token well distributed.
@@ -15,7 +17,7 @@
 
   function encodeBites(bites) {
     return bites
-      .map(({ x, y }) => `${Math.round(x * 10).toString(36)}-${Math.round(y * 10).toString(36)}`)
+      .map(({ x, y }) => `${Math.round(x * ENCODE_SCALE).toString(36)}-${Math.round(y * ENCODE_SCALE).toString(36)}`)
       .join('_');
   }
 
@@ -28,8 +30,8 @@
       .split('_')
       .map((entry) => {
         const [rawX, rawY] = entry.split('-');
-        const x = parseInt(rawX, 36) / 10;
-        const y = parseInt(rawY, 36) / 10;
+        const x = parseInt(rawX, 36) / ENCODE_SCALE;
+        const y = parseInt(rawY, 36) / ENCODE_SCALE;
 
         if (!Number.isFinite(x) || !Number.isFinite(y)) {
           return null;
