@@ -289,15 +289,17 @@
     const RATIO_PENALTY_WEIGHT = 7;
     // Leave a little inset so the preview stays inside the stage while still hugging the food edge.
     const EDGE_CLEARANCE_FACTOR = 0.55;
-    const SEARCH_RADII = [1.6, 3.2, 4.8, 6.4];
+    const SEARCH_RADII = [1.6, 3.2, 4.8, 6.4, 12.8, 19.2, 28.8, 38.4];
     // Resolution of the offscreen canvas used for pixel-level food detection.
     const FOOD_CANVAS_SIZE = 300;
     // Step size (in SVG units) for the grid used to detect whether any food remains.
     const FOOD_CHECK_STEP = 3;
     // Pixels darker than this luminance (0–255) are considered food, not plate.
-    const FOOD_LUMINANCE_THRESHOLD = 205;
-    // Pixels with more color variation than this are considered food even if bright (e.g. golden bread).
-    const FOOD_SATURATION_THRESHOLD = 28;
+    // The plate background in the photo has luminance ~130–160 (not white), so this must stay below that.
+    const FOOD_LUMINANCE_THRESHOLD = 100;
+    // Pixels with more color variation than this are considered food (e.g. golden bread, onion rings, pickles).
+    // The plate background has saturation ~8–11, so a threshold of 25 cleanly separates it from food.
+    const FOOD_SATURATION_THRESHOLD = 25;
 
     const stage = document.getElementById('sandwich-stage');
     const canvas = document.getElementById('sandwich-canvas');
