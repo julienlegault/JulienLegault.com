@@ -6,8 +6,6 @@
   <title>Sandwich Animation</title>
   <style>
     :root {
-      --animation-duration: 7s;
-      --bread-hue: 0deg;
       --accent-glow: rgba(255, 100, 100, 0.26);
       --wobble: 2deg;
     }
@@ -63,7 +61,7 @@
       letter-spacing: 0.02em;
     }
 
-    .animation {
+    .animation-wrap {
       position: relative;
       width: min(100%, 580px);
       aspect-ratio: 1 / 1;
@@ -71,40 +69,15 @@
       border-radius: 28px;
       overflow: hidden;
       box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03), 0 24px 60px var(--accent-glow);
-      background:
-        radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.18), transparent 22%),
-        linear-gradient(180deg, #2b3142, #1a1d27 55%, #151821);
+      background: linear-gradient(180deg, #2b3142, #1a1d27 55%, #151821);
     }
 
-    .animation svg {
+    .animation-wrap canvas {
+      display: block;
       width: 100%;
       height: 100%;
-      display: block;
-      filter: hue-rotate(var(--bread-hue));
+      animation: sandwich-wobble 3.4s ease-in-out infinite;
       transform-origin: 50% 50%;
-      animation:
-        sandwich-fade var(--animation-duration) ease-in-out infinite,
-        sandwich-wobble calc(var(--animation-duration) * 0.5) ease-in-out infinite;
-    }
-
-    .bite-mark-layer {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-    }
-
-    .bite-mark {
-      position: absolute;
-      width: 16%;
-      aspect-ratio: 1 / 1;
-      border-radius: 50%;
-      transform: translate(-50%, -50%) scale(0);
-      background:
-        radial-gradient(circle at 45% 42%, rgba(0, 0, 0, 0.34) 0 30%, rgba(0, 0, 0, 0.16) 31% 48%, transparent 49%),
-        radial-gradient(circle at 50% 50%, #181b24 0 58%, transparent 59%);
-      filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.22));
-      animation: bite-sequence var(--animation-duration) ease-in-out infinite;
-      animation-delay: var(--delay, 0s);
     }
 
     .links {
@@ -131,16 +104,6 @@
       background: #2d3548;
     }
 
-    @keyframes bite-sequence {
-      0%, 6% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-      12%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-    }
-
-    @keyframes sandwich-fade {
-      0%, 38% { opacity: 1; }
-      52%, 100% { opacity: 0.74; }
-    }
-
     @keyframes sandwich-wobble {
       0%, 100% { transform: rotate(calc(var(--wobble) * -1)) scale(0.995); }
       50% { transform: rotate(var(--wobble)) scale(1.01); }
@@ -150,26 +113,11 @@
 <body>
   <main>
     <h1>Your Sandwich GIF</h1>
-    <p id="replay-description">This replay is generated from the hashed perimeter bites you picked on the sandwich test.</p>
+    <p id="replay-description">This replay is generated from the hashed bite path you picked on the sandwich test.</p>
     <div class="hash-pill" id="hash-pill">GIF seed</div>
 
-    <div class="animation" aria-label="Animated sandwich being eaten">
-      <svg viewBox="0 0 100 100" aria-hidden="true">
-        <defs>
-          <radialGradient id="bread-full" cx="50%" cy="35%" r="70%">
-            <stop offset="0%" stop-color="#f4d090" />
-            <stop offset="65%" stop-color="#e6b56d" />
-            <stop offset="100%" stop-color="#cb8f4c" />
-          </radialGradient>
-        </defs>
-        <rect width="100" height="100" fill="transparent" />
-        <ellipse cx="50" cy="50" rx="33" ry="24" fill="#815239" opacity="0.28" />
-        <ellipse cx="50" cy="49" rx="31" ry="22" fill="url(#bread-full)" />
-        <path d="M27 44C35 37 65 37 73 44" stroke="#ffe1a9" stroke-width="4" stroke-linecap="round" />
-        <path d="M29 58C37 62 63 62 71 58" stroke="#b85e4b" stroke-width="3.2" stroke-linecap="round" />
-        <path d="M31 61C39 66 61 66 69 61" stroke="#74b55d" stroke-width="2.6" stroke-linecap="round" />
-      </svg>
-      <div class="bite-mark-layer" id="bite-mark-layer" aria-hidden="true"></div>
+    <div class="animation-wrap" aria-label="Animated plate being eaten">
+      <canvas id="anim-canvas" aria-hidden="true"></canvas>
     </div>
 
     <div class="links">
@@ -180,6 +128,8 @@
 
   <script src="sandwich-utils.js"></script>
   <script>
+    const BITE_RADIUS = 8;
+    const GRID_SIZE = 100;
     const DURATION_VARIANCE_RANGE = 2200;
     const WOBBLE_VARIANCE_SHIFT = 5;
     const WOBBLE_VARIANCE_RANGE = 3;
@@ -197,9 +147,12 @@
       { x: 79, y: 61 }
     ];
 
-    const biteMarkLayer = document.getElementById('bite-mark-layer');
+    const canvas = document.getElementById('anim-canvas');
+    const ctx = canvas.getContext('2d');
+    const wrap = canvas.parentElement;
     const hashPill = document.getElementById('hash-pill');
     const replayDescription = document.getElementById('replay-description');
+
     const { HASH_PATTERN, hashString, encodeBites, decodeBites } = window.SandwichUtils;
 
     const params = new URLSearchParams(window.location.search);
@@ -209,29 +162,95 @@
     const requestedHash = params.get('hash');
     const hash = HASH_PATTERN.test(requestedHash || '') ? requestedHash : hashString(biteToken);
     const seed = parseInt(hash, 16);
-    const duration = 6 + ((seed % DURATION_VARIANCE_RANGE) / 1000);
+    const duration = (6 + ((seed % DURATION_VARIANCE_RANGE) / 1000)) * 1000; // in ms
     const revealWindow = duration * 0.48;
     const biteDelayStep = revealWindow / Math.max(bites.length, 1);
     const glowHue = seed % 360;
     const wobble = 1 + ((seed >> WOBBLE_VARIANCE_SHIFT) % WOBBLE_VARIANCE_RANGE);
     const hueShift = ((seed >> HUE_SHIFT_SHIFT) % HUE_SHIFT_RANGE) - 4;
 
-    document.documentElement.style.setProperty('--animation-duration', `${duration.toFixed(2)}s`);
-    document.documentElement.style.setProperty('--bread-hue', `${hueShift}deg`);
     document.documentElement.style.setProperty('--accent-glow', `hsla(${glowHue} 80% 68% / 0.24)`);
     document.documentElement.style.setProperty('--wobble', `${wobble}deg`);
-
-    bites.forEach((bite, index) => {
-      const mark = document.createElement('div');
-      mark.className = 'bite-mark';
-      mark.style.left = `${bite.x}%`;
-      mark.style.top = `${bite.y}%`;
-      mark.style.setProperty('--delay', `${(index * biteDelayStep).toFixed(2)}s`);
-      biteMarkLayer.appendChild(mark);
-    });
+    canvas.style.filter = `hue-rotate(${hueShift}deg)`;
+    canvas.style.animationDuration = `${(duration / 2 / 1000).toFixed(2)}s`;
 
     hashPill.textContent = `GIF seed #${hash}`;
     replayDescription.textContent = `This replay was generated from ${bites.length} hashed perimeter bite${bites.length === 1 ? '' : 's'}.`;
+
+    // Times (ms into the cycle) at which each bite becomes visible.
+    const biteRevealTimes = bites.map((_, i) => (i + 1) * biteDelayStep);
+
+    function syncCanvasSize() {
+      const side = wrap.clientWidth || 580;
+      canvas.width = side;
+      canvas.height = side;
+    }
+
+    function drawFrame(elapsed) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (!plateImage) {
+        return;
+      }
+
+      ctx.drawImage(plateImage, 0, 0, canvas.width, canvas.height);
+
+      // Determine how many bites have been revealed so far in this cycle.
+      const revealedCount = biteRevealTimes.filter((t) => elapsed >= t).length;
+
+      if (revealedCount === 0) {
+        return;
+      }
+
+      ctx.save();
+      ctx.globalCompositeOperation = 'destination-out';
+
+      for (let i = 0; i < revealedCount; i += 1) {
+        const bite = bites[i];
+        const cx = (bite.x / GRID_SIZE) * canvas.width;
+        const cy = (bite.y / GRID_SIZE) * canvas.height;
+        const r = (BITE_RADIUS / GRID_SIZE) * canvas.width;
+
+        const gradient = ctx.createRadialGradient(cx, cy, r * 0.6, cx, cy, r);
+        gradient.addColorStop(0, 'rgba(0,0,0,1)');
+        gradient.addColorStop(1, 'rgba(0,0,0,0.88)');
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    let animStart = null;
+    let plateImage = null;
+
+    function animate(timestamp) {
+      if (!animStart) {
+        animStart = timestamp;
+      }
+
+      // Loop elapsed time within the animation cycle.
+      const elapsed = (timestamp - animStart) % duration;
+      drawFrame(elapsed);
+      requestAnimationFrame(animate);
+    }
+
+    const img = new Image();
+    img.onload = function () {
+      plateImage = img;
+      syncCanvasSize();
+      requestAnimationFrame(animate);
+    };
+    img.src = 'images/sandwich-plate.jpg';
+
+    const resizeObserver = new ResizeObserver(() => {
+      syncCanvasSize();
+    });
+    resizeObserver.observe(wrap);
+
+    syncCanvasSize();
   </script>
 </body>
 </html>
