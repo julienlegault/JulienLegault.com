@@ -104,6 +104,34 @@
       background: #2d3548;
     }
 
+    .share-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      min-height: 2.75rem;
+      padding: 0.8rem 1.15rem;
+      border-radius: 999px;
+      border: 0;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      background: #2d3548;
+      color: #eef1f8;
+      transition: transform 0.15s ease, background 0.2s ease;
+    }
+
+    .share-button:hover,
+    .share-button:focus-visible {
+      transform: translateY(-1px);
+      background: #3a4460;
+    }
+
+    .share-button.copied {
+      background: #2e5a3a;
+      color: #a8e6a3;
+    }
+
     @keyframes sandwich-wobble {
       0%, 100% { transform: rotate(calc(var(--wobble) * -1)) scale(0.995); }
       50% { transform: rotate(var(--wobble)) scale(1.01); }
@@ -122,6 +150,7 @@
 
     <div class="links">
       <a class="link secondary" href="sandwich-bite-test.html">Back to the bite test</a>
+      <button class="share-button" type="button" id="share-button">🔗 Copy link</button>
       <a class="link" href="index.html">Return home</a>
     </div>
   </main>
@@ -152,15 +181,24 @@
     const wrap = canvas.parentElement;
     const hashPill = document.getElementById('hash-pill');
     const replayDescription = document.getElementById('replay-description');
+    const shareButton = document.getElementById('share-button');
 
     const { HASH_PATTERN, hashString, encodeBites, decodeBites } = window.SandwichUtils;
 
+    // Prefer URL fragment (#<encoded_bites>) for sharing; fall back to legacy ?bites= query param.
+    const fragmentToken = window.location.hash.slice(1);
     const params = new URLSearchParams(window.location.search);
-    const requestedBites = decodeBites(params.get('bites'));
+    const rawBiteToken = fragmentToken || params.get('bites') || '';
+    const requestedBites = decodeBites(rawBiteToken);
     const bites = requestedBites.length ? requestedBites : DEFAULT_BITES;
-    const biteToken = requestedBites.length ? params.get('bites') : encodeBites(DEFAULT_BITES);
+    const biteToken = requestedBites.length ? rawBiteToken : encodeBites(DEFAULT_BITES);
     const requestedHash = params.get('hash');
     const hash = HASH_PATTERN.test(requestedHash || '') ? requestedHash : hashString(biteToken);
+
+    // Ensure the canonical shareable URL uses the fragment form.
+    if (!fragmentToken && requestedBites.length) {
+      history.replaceState(null, '', `#${biteToken}`);
+    }
     const seed = parseInt(hash, 16);
     const duration = (6 + ((seed % DURATION_VARIANCE_RANGE) / 1000)) * 1000; // in ms
     const revealWindow = duration * 0.48;
@@ -251,6 +289,23 @@
     resizeObserver.observe(wrap);
 
     syncCanvasSize();
+
+    shareButton.addEventListener('click', () => {
+      const shareUrl = window.location.href;
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        shareButton.textContent = '✓ Copied!';
+        shareButton.classList.add('copied');
+        setTimeout(() => {
+          shareButton.textContent = '🔗 Copy link';
+          shareButton.classList.remove('copied');
+        }, 2000);
+      }).catch(() => {
+        shareButton.textContent = '⚠ Copy failed';
+        setTimeout(() => {
+          shareButton.textContent = '🔗 Copy link';
+        }, 2000);
+      });
+    });
   </script>
 </body>
 </html>
