@@ -48,7 +48,7 @@
       margin: 0 0 1.5rem;
       color: #b1bdd7;
       line-height: 1.5;
-      max-width: 38rem;
+      max-width: 40rem;
     }
 
     .stage-card,
@@ -70,18 +70,31 @@
       margin: 0 auto;
       border-radius: 28px;
       overflow: hidden;
+      cursor: crosshair;
+      touch-action: none;
       background:
         radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.18), transparent 22%),
         linear-gradient(180deg, #2b3142, #1a1d27 55%, #151821);
     }
 
-    .sandwich-stage svg {
+    .sandwich-stage.is-finished {
+      cursor: default;
+    }
+
+    .sandwich-stage svg,
+    .bite-mark-layer {
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
       display: block;
     }
 
-    .bite,
+    .bite-mark-layer {
+      pointer-events: none;
+    }
+
+    .bite-preview,
     .bite-mark {
       position: absolute;
       width: 16%;
@@ -90,37 +103,21 @@
       transform: translate(-50%, -50%);
     }
 
-    .bite {
+    .bite-preview {
       border: 0;
-      cursor: pointer;
-      background: rgba(255, 72, 72, 0.2);
-      outline: 3px solid rgba(255, 72, 72, 0.4);
-      transition: transform 0.2s ease, outline-color 0.2s ease, background 0.2s ease, opacity 0.2s ease;
-      opacity: 0.2;
       pointer-events: none;
-    }
-
-    .bite::before {
-      content: "";
-      position: absolute;
-      inset: 18%;
-      border-radius: 50%;
-      border: 3px dashed rgba(255, 255, 255, 0.2);
-    }
-
-    .bite.is-active {
-      opacity: 1;
-      pointer-events: auto;
-      background: rgba(255, 72, 72, 0.84);
-      outline-color: rgba(255, 176, 176, 0.95);
+      background: rgba(255, 72, 72, 0.82);
+      outline: 3px solid rgba(255, 176, 176, 0.95);
       animation: pulse 1.3s ease-in-out infinite;
       z-index: 3;
     }
 
-    .bite.is-taken {
-      opacity: 0;
-      pointer-events: none;
-      animation: bite-away 0.45s ease forwards;
+    .bite-preview::before {
+      content: "";
+      position: absolute;
+      inset: 18%;
+      border-radius: 50%;
+      border: 3px dashed rgba(255, 255, 255, 0.28);
     }
 
     .bite-mark {
@@ -193,6 +190,14 @@
       border-color: #ff9c9c;
     }
 
+    .hash-note {
+      display: block;
+      min-height: 1.4rem;
+      margin-top: 0.75rem;
+      color: #ffb9b9;
+      font-size: 0.95rem;
+    }
+
     .actions {
       display: flex;
       flex-wrap: wrap;
@@ -241,11 +246,6 @@
       50% { transform: translate(-50%, -50%) scale(1.08); }
     }
 
-    @keyframes bite-away {
-      0% { transform: translate(-50%, -50%) scale(1); }
-      100% { transform: translate(-50%, -50%) scale(0.18); }
-    }
-
     @keyframes mark-in {
       0% { transform: translate(-50%, -50%) scale(0.45); }
       100% { transform: translate(-50%, -50%) scale(1); }
@@ -264,10 +264,10 @@
     <div class="layout">
       <section>
         <h1>Sandwich Bite Test</h1>
-        <p class="intro">Tap the highlighted bite in order to show how you would eat the sandwich. Each red target disappears after the bite animation, and the full-sandwich animation unlocks once the meal is gone.</p>
+        <p class="intro">Move your cursor or tap anywhere on the remaining perimeter to choose the next bite. After eight bites, the path is hashed into a custom sandwich GIF.</p>
 
         <div class="stage-card">
-          <div class="sandwich-stage" aria-label="Top view of a sandwich with bite targets">
+          <div class="sandwich-stage" id="sandwich-stage" aria-label="Top view of a sandwich that accepts bites on the remaining edge">
             <svg viewBox="0 0 100 100" aria-hidden="true">
               <defs>
                 <radialGradient id="bread" cx="50%" cy="35%" r="70%">
@@ -275,24 +275,23 @@
                   <stop offset="65%" stop-color="#e6b56d" />
                   <stop offset="100%" stop-color="#cb8f4c" />
                 </radialGradient>
+                <mask id="sandwich-mask">
+                  <rect width="100" height="100" fill="black" />
+                  <ellipse cx="50" cy="49" rx="31" ry="22" fill="white" />
+                  <g id="bite-holes" fill="black"></g>
+                </mask>
               </defs>
               <rect width="100" height="100" fill="transparent" />
               <ellipse cx="50" cy="50" rx="33" ry="24" fill="#815239" opacity="0.28" />
-              <ellipse cx="50" cy="49" rx="31" ry="22" fill="url(#bread)" />
-              <path d="M27 44C35 37 65 37 73 44" stroke="#ffe1a9" stroke-width="4" stroke-linecap="round" />
-              <path d="M29 58C37 62 63 62 71 58" stroke="#b85e4b" stroke-width="3.2" stroke-linecap="round" />
-              <path d="M31 61C39 66 61 66 69 61" stroke="#74b55d" stroke-width="2.6" stroke-linecap="round" />
+              <g mask="url(#sandwich-mask)">
+                <ellipse cx="50" cy="49" rx="31" ry="22" fill="url(#bread)" />
+                <path d="M27 44C35 37 65 37 73 44" stroke="#ffe1a9" stroke-width="4" stroke-linecap="round" />
+                <path d="M29 58C37 62 63 62 71 58" stroke="#b85e4b" stroke-width="3.2" stroke-linecap="round" />
+                <path d="M31 61C39 66 61 66 69 61" stroke="#74b55d" stroke-width="2.6" stroke-linecap="round" />
+              </g>
             </svg>
-            <div class="bite-mark" data-bite-mark="0" style="left: 73%; top: 27%;"></div>
-            <div class="bite-mark" data-bite-mark="1" style="left: 84%; top: 47%;"></div>
-            <div class="bite-mark" data-bite-mark="2" style="left: 70%; top: 71%;"></div>
-            <div class="bite-mark" data-bite-mark="3" style="left: 36%; top: 74%;"></div>
-            <div class="bite-mark" data-bite-mark="4" style="left: 22%; top: 45%;"></div>
-            <button class="bite" data-bite="0" style="left: 73%; top: 27%;" aria-label="Take bite 1"></button>
-            <button class="bite" data-bite="1" style="left: 84%; top: 47%;" aria-label="Take bite 2"></button>
-            <button class="bite" data-bite="2" style="left: 70%; top: 71%;" aria-label="Take bite 3"></button>
-            <button class="bite" data-bite="3" style="left: 36%; top: 74%;" aria-label="Take bite 4"></button>
-            <button class="bite" data-bite="4" style="left: 22%; top: 45%;" aria-label="Take bite 5"></button>
+            <div class="bite-mark-layer" id="bite-mark-layer" aria-hidden="true"></div>
+            <div class="bite-preview" id="bite-preview" hidden></div>
           </div>
         </div>
       </section>
@@ -300,95 +299,288 @@
       <aside class="panel">
         <h2>How it works</h2>
         <ol>
-          <li>Only one bite is live at a time, shown with a bright red target.</li>
-          <li>Click the active target to play the bite animation and reveal the missing chunk.</li>
-          <li>Finish all five bites to unlock the full sandwich-eating animation.</li>
+          <li>Every click searches for a valid bite that still touches the exposed sandwich edge.</li>
+          <li>The bitten area disappears immediately, so new perimeter paths open up after every bite.</li>
+          <li>After eight bites, the bite coordinates are hashed into a replayable sandwich GIF.</li>
         </ol>
 
         <div class="status" aria-live="polite">
-          <strong id="status-title">Start with the top-right corner.</strong>
-          <span id="status-copy">5 bites left.</span>
+          <strong id="status-title">Choose the next bite anywhere on the remaining edge.</strong>
+          <span id="status-copy">8 bites left.</span>
           <div class="progress" id="progress" aria-hidden="true"></div>
+          <span class="hash-note" id="hash-note"></span>
         </div>
 
         <div class="actions">
           <button class="button" type="button" id="reset-button">Reset sandwich</button>
-          <a class="reward-link" id="reward-link" href="sandwich-full-animation.html" hidden>Watch the full sandwich animation</a>
+          <a class="reward-link" id="reward-link" href="sandwich-full-animation.html" hidden>Watch your sandwich GIF</a>
         </div>
       </aside>
     </div>
   </main>
 
+  <script src="sandwich-utils.js"></script>
   <script>
-    const bites = Array.from(document.querySelectorAll('[data-bite]'));
-    const biteMarks = Array.from(document.querySelectorAll('[data-bite-mark]'));
+    const TOTAL_BITES = 8;
+    const BITE_RADIUS = 8;
+    const SVG_SIZE = 100;
+    const MIN_OVERLAP_SAMPLES = 14;
+    const MIN_OVERLAP_RATIO = 0.22;
+    const MAX_OVERLAP_RATIO = 0.72;
+    const IDEAL_OVERLAP_RATIO = 0.48;
+    // Keep overlap quality important enough to prefer round, sandwich-shaped bites over distant edge matches.
+    const RATIO_PENALTY_WEIGHT = 7;
+    // Leave a little inset so the preview stays inside the stage while still hugging the sandwich edge.
+    const EDGE_CLEARANCE_FACTOR = 0.55;
+    const SEARCH_RADII = [1.6, 3.2, 4.8, 6.4];
+    const SANDWICH_CENTER_X = 50;
+    const SANDWICH_CENTER_Y = 49;
+    const SANDWICH_RADIUS_X = 31;
+    const SANDWICH_RADIUS_Y = 22;
+    const sandwich = {
+      cx: SANDWICH_CENTER_X,
+      cy: SANDWICH_CENTER_Y,
+      rx: SANDWICH_RADIUS_X,
+      ry: SANDWICH_RADIUS_Y
+    };
+
+    const stage = document.getElementById('sandwich-stage');
+    const biteHoles = document.getElementById('bite-holes');
+    const biteMarkLayer = document.getElementById('bite-mark-layer');
+    const bitePreview = document.getElementById('bite-preview');
     const progress = document.getElementById('progress');
     const statusTitle = document.getElementById('status-title');
     const statusCopy = document.getElementById('status-copy');
+    const hashNote = document.getElementById('hash-note');
     const rewardLink = document.getElementById('reward-link');
     const resetButton = document.getElementById('reset-button');
-    const biteMessages = [
-      'Start with the top-right corner.',
-      'Now move to the right edge.',
-      'Next, take the bottom-right bite.',
-      'Keep going with the bottom-left side.',
-      'Finish on the left edge.'
-    ];
-    let activeIndex = 0;
+
+    const biteSampleOffsets = [];
+    const biteSearchOffsets = [{ x: 0, y: 0 }];
+    let takenBites = [];
+    let previewBite = null;
+    let feedbackTimer = null;
+
+    for (let y = -BITE_RADIUS; y <= BITE_RADIUS; y += 2) {
+      for (let x = -BITE_RADIUS; x <= BITE_RADIUS; x += 2) {
+        if ((x * x) + (y * y) <= BITE_RADIUS * BITE_RADIUS) {
+          biteSampleOffsets.push({ x, y });
+        }
+      }
+    }
+
+    // Expand outward in bite-sized steps so rough clicks still snap to the nearest valid perimeter bite.
+    for (const radius of SEARCH_RADII) {
+      for (let index = 0; index < 12; index += 1) {
+        const angle = (index / 12) * Math.PI * 2;
+        biteSearchOffsets.push({
+          x: Math.cos(angle) * radius,
+          y: Math.sin(angle) * radius
+        });
+      }
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function roundToTenths(value) {
+      return Math.round(value * 10) / 10;
+    }
+
+    const { hashString, encodeBites } = window.SandwichUtils;
+
+    function isInsideRemainingSandwich(x, y) {
+      const normalizedX = (x - sandwich.cx) / sandwich.rx;
+      const normalizedY = (y - sandwich.cy) / sandwich.ry;
+      const insideBase = (normalizedX * normalizedX) + (normalizedY * normalizedY) <= 1;
+
+      if (!insideBase) {
+        return false;
+      }
+
+      return !takenBites.some((bite) => {
+        const dx = x - bite.x;
+        const dy = y - bite.y;
+        return (dx * dx) + (dy * dy) <= BITE_RADIUS * BITE_RADIUS;
+      });
+    }
+
+    function measureCandidate(x, y) {
+      let overlapCount = 0;
+
+      for (const offset of biteSampleOffsets) {
+        if (isInsideRemainingSandwich(x + offset.x, y + offset.y)) {
+          overlapCount += 1;
+        }
+      }
+
+      const ratio = overlapCount / biteSampleOffsets.length;
+      const isValid = overlapCount >= MIN_OVERLAP_SAMPLES && ratio >= MIN_OVERLAP_RATIO && ratio <= MAX_OVERLAP_RATIO;
+      return { overlapCount, ratio, isValid };
+    }
+
+    function findCandidate(x, y) {
+      let bestCandidate = null;
+
+      for (const offset of biteSearchOffsets) {
+        const candidateX = clamp(x + offset.x, BITE_RADIUS * EDGE_CLEARANCE_FACTOR, SVG_SIZE - (BITE_RADIUS * EDGE_CLEARANCE_FACTOR));
+        const candidateY = clamp(y + offset.y, BITE_RADIUS * EDGE_CLEARANCE_FACTOR, SVG_SIZE - (BITE_RADIUS * EDGE_CLEARANCE_FACTOR));
+        const measurement = measureCandidate(candidateX, candidateY);
+
+        if (!measurement.isValid) {
+          continue;
+        }
+
+        const distanceScore = Math.hypot(offset.x, offset.y);
+        // Distance stays within a few SVG units, so this overlap penalty is scaled to that same range for tie-breaking.
+        const overlapScore = Math.abs(measurement.ratio - IDEAL_OVERLAP_RATIO) * RATIO_PENALTY_WEIGHT;
+        const score = distanceScore + overlapScore;
+
+        if (!bestCandidate || score < bestCandidate.score) {
+          bestCandidate = {
+            x: roundToTenths(candidateX),
+            y: roundToTenths(candidateY),
+            score
+          };
+        }
+      }
+
+      return bestCandidate;
+    }
 
     function renderProgress() {
       progress.innerHTML = '';
 
-      bites.forEach((_, index) => {
+      for (let index = 0; index < TOTAL_BITES; index += 1) {
         const dot = document.createElement('span');
         dot.className = 'progress-dot';
-        if (index < activeIndex) {
+        if (index < takenBites.length) {
           dot.classList.add('is-done');
         }
         progress.appendChild(dot);
-      });
+      }
+    }
+
+    function renderPreview() {
+      if (!previewBite || takenBites.length >= TOTAL_BITES) {
+        bitePreview.hidden = true;
+        return;
+      }
+
+      bitePreview.hidden = false;
+      bitePreview.style.left = `${previewBite.x}%`;
+      bitePreview.style.top = `${previewBite.y}%`;
+    }
+
+    function clearFeedbackTimer() {
+      if (feedbackTimer) {
+        window.clearTimeout(feedbackTimer);
+        feedbackTimer = null;
+      }
+    }
+
+    function setTemporaryFeedback(message) {
+      clearFeedbackTimer();
+      statusCopy.textContent = message;
+      feedbackTimer = window.setTimeout(() => {
+        feedbackTimer = null;
+        updateState();
+      }, 1200);
     }
 
     function updateState() {
-      bites.forEach((bite, index) => {
-        bite.classList.toggle('is-active', index === activeIndex);
-      });
+      renderProgress();
 
-      if (activeIndex >= bites.length) {
+      if (takenBites.length >= TOTAL_BITES) {
+        const encodedBites = encodeBites(takenBites);
+        const hash = hashString(encodedBites);
         statusTitle.textContent = 'Sandwich finished.';
-        statusCopy.textContent = 'Every bite has been taken.';
+        statusCopy.textContent = 'Your perimeter path has been hashed into a sandwich GIF.';
+        hashNote.textContent = `GIF seed #${hash}`;
+        rewardLink.href = `sandwich-full-animation.html?bites=${encodeURIComponent(encodedBites)}&hash=${hash}`;
+        rewardLink.textContent = `Watch sandwich GIF #${hash}`;
         rewardLink.hidden = false;
+        stage.classList.add('is-finished');
       } else {
-        statusTitle.textContent = biteMessages[activeIndex];
-        statusCopy.textContent = `${bites.length - activeIndex} bites left.`;
+        statusTitle.textContent = 'Choose the next bite anywhere on the remaining edge.';
+        statusCopy.textContent = `${TOTAL_BITES - takenBites.length} bites left.`;
+        hashNote.textContent = '';
         rewardLink.hidden = true;
+        stage.classList.remove('is-finished');
       }
 
-      renderProgress();
+      renderPreview();
     }
 
-    bites.forEach((bite, index) => {
-      bite.addEventListener('click', () => {
-        if (index !== activeIndex) {
-          return;
-        }
+    function addBite(bite) {
+      takenBites.push(bite);
 
-        bite.classList.remove('is-active');
-        bite.classList.add('is-taken');
-        biteMarks[index].classList.add('is-visible');
-        activeIndex += 1;
-        window.setTimeout(updateState, 220);
-      });
+      const hole = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      hole.setAttribute('cx', bite.x);
+      hole.setAttribute('cy', bite.y);
+      hole.setAttribute('r', BITE_RADIUS);
+      biteHoles.appendChild(hole);
+
+      const mark = document.createElement('div');
+      mark.className = 'bite-mark is-visible';
+      mark.style.left = `${bite.x}%`;
+      mark.style.top = `${bite.y}%`;
+      biteMarkLayer.appendChild(mark);
+
+      previewBite = null;
+      clearFeedbackTimer();
+      updateState();
+    }
+
+    function getStagePoint(event) {
+      const rect = stage.getBoundingClientRect();
+      return {
+        x: ((event.clientX - rect.left) / rect.width) * SVG_SIZE,
+        y: ((event.clientY - rect.top) / rect.height) * SVG_SIZE
+      };
+    }
+
+    stage.addEventListener('pointermove', (event) => {
+      if (takenBites.length >= TOTAL_BITES) {
+        return;
+      }
+
+      const point = getStagePoint(event);
+      previewBite = findCandidate(point.x, point.y);
+      renderPreview();
+    });
+
+    stage.addEventListener('pointerleave', () => {
+      previewBite = null;
+      renderPreview();
+    });
+
+    stage.addEventListener('click', (event) => {
+      if (takenBites.length >= TOTAL_BITES) {
+        return;
+      }
+
+      const point = getStagePoint(event);
+      const candidate = findCandidate(point.x, point.y);
+
+      if (!candidate) {
+        previewBite = null;
+        renderPreview();
+        setTemporaryFeedback('Click a spot that touches the remaining sandwich edge.');
+        return;
+      }
+
+      addBite(candidate);
     });
 
     resetButton.addEventListener('click', () => {
-      activeIndex = 0;
-      bites.forEach((bite) => {
-        bite.classList.remove('is-active', 'is-taken');
-      });
-      biteMarks.forEach((mark) => {
-        mark.classList.remove('is-visible');
-      });
+      takenBites = [];
+      previewBite = null;
+      biteHoles.innerHTML = '';
+      biteMarkLayer.innerHTML = '';
+      rewardLink.hidden = true;
+      clearFeedbackTimer();
       updateState();
     });
 
