@@ -129,7 +129,7 @@
   <script src="sandwich-utils.js"></script>
   <script>
     const BITE_RADIUS = 8;
-    const SVG_SIZE = 100;
+    const GRID_SIZE = 100;
     const DURATION_VARIANCE_RANGE = 2200;
     const WOBBLE_VARIANCE_SHIFT = 5;
     const WOBBLE_VARIANCE_RANGE = 3;
@@ -207,9 +207,9 @@
 
       for (let i = 0; i < revealedCount; i += 1) {
         const bite = bites[i];
-        const cx = (bite.x / SVG_SIZE) * canvas.width;
-        const cy = (bite.y / SVG_SIZE) * canvas.height;
-        const r = (BITE_RADIUS / SVG_SIZE) * canvas.width;
+        const cx = (bite.x / GRID_SIZE) * canvas.width;
+        const cy = (bite.y / GRID_SIZE) * canvas.height;
+        const r = (BITE_RADIUS / GRID_SIZE) * canvas.width;
 
         const gradient = ctx.createRadialGradient(cx, cy, r * 0.6, cx, cy, r);
         gradient.addColorStop(0, 'rgba(0,0,0,1)');
