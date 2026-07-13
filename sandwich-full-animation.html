@@ -201,7 +201,7 @@
       history.replaceState(null, '', `#${biteToken}`);
     }
     const seed = parseInt(hash, 16);
-    const duration = (6 + ((seed % DURATION_VARIANCE_RANGE) / 1000)) * 1000; // in ms
+    const duration = ((6 + ((seed % DURATION_VARIANCE_RANGE) / 1000)) * 1.3) * 1000; // in ms
     const revealWindow = duration * 0.48;
     const biteDelayStep = revealWindow / Math.max(bites.length, 1);
     const glowHue = seed % 360;
@@ -292,10 +292,10 @@
     syncCanvasSize();
 
     shareButton.addEventListener('click', async () => {
-      // Build a short share URL using g.html as a compact alias for this page.
+      // Build a share URL that carries bites in query params so unfurlers can read them.
       // Derive the base path so this works regardless of deployment subdirectory.
       const basePath = window.location.pathname.replace(/[^/]*$/, '');
-      const shortUrl = window.location.origin + basePath + 'g.html' + window.location.hash;
+      const shortUrl = window.location.origin + basePath + 'sandwich-full-animation.html?bites=' + encodeURIComponent(biteToken);
       let copied = false;
 
       try {
