@@ -296,7 +296,7 @@
       // Build a share URL that carries bites in query params so unfurlers can read them.
       // Derive the base path so this works regardless of deployment subdirectory.
       const basePath = window.location.pathname.replace(/[^/]*$/, '');
-      const shortUrl = new URL('sandwich-full-animation.html', window.location.origin + basePath);
+      const shortUrl = new URL(`${basePath}sandwich-full-animation.html`, window.location.origin);
       shortUrl.searchParams.set('bites', biteToken);
       let copied = false;
 
