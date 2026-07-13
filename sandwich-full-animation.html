@@ -191,12 +191,13 @@
     const rawBiteToken = fragmentToken || params.get('bites') || '';
     const requestedBites = decodeBites(rawBiteToken);
     const bites = requestedBites.length ? requestedBites : DEFAULT_BITES;
-    const biteToken = requestedBites.length ? rawBiteToken : encodeBites(DEFAULT_BITES);
+    // Always normalize to compact encoding so the share URL stays short.
+    const biteToken = encodeBites(bites);
     const requestedHash = params.get('hash');
     const hash = HASH_PATTERN.test(requestedHash || '') ? requestedHash : hashString(biteToken);
 
-    // Ensure the canonical shareable URL uses the fragment form.
-    if (!fragmentToken && requestedBites.length) {
+    // Normalize to canonical compact fragment form whenever bites were provided.
+    if (requestedBites.length && window.location.hash !== `#${biteToken}`) {
       history.replaceState(null, '', `#${biteToken}`);
     }
     const seed = parseInt(hash, 16);
@@ -290,66 +291,28 @@
 
     syncCanvasSize();
 
-    let shortenPending = false;
-    const SHORTEN_TIMEOUT_MS = 6000;
-
     shareButton.addEventListener('click', async () => {
-      if (shortenPending) {
-        return;
-      }
-
-      const longUrl = window.location.href;
-      shortenPending = true;
-      shareButton.textContent = '⏳ Shortening…';
-      shareButton.disabled = true;
-
-      let urlToCopy = longUrl;
-
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), SHORTEN_TIMEOUT_MS);
-
-        try {
-          const response = await fetch(
-            `https://is.gd/create.php?format=simple&url=${encodeURIComponent(longUrl)}`,
-            { signal: controller.signal }
-          );
-
-          if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
-          }
-          const shortUrl = (await response.text()).trim();
-          if (!/^https:\/\/is\.gd\/[\w-]+$/.test(shortUrl)) {
-            throw new Error('Unexpected response format');
-          }
-          urlToCopy = shortUrl;
-        } finally {
-          clearTimeout(timeoutId);
-        }
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('URL shortening failed, falling back to long URL:', error);
-      }
-
+      // Build a short share URL using g.html as a compact alias for this page.
+      // Derive the base path so this works regardless of deployment subdirectory.
+      const basePath = window.location.pathname.replace(/[^/]*$/, '');
+      const shortUrl = window.location.origin + basePath + 'g.html' + window.location.hash;
       let copied = false;
 
       try {
-        await navigator.clipboard.writeText(urlToCopy);
+        await navigator.clipboard.writeText(shortUrl);
         copied = true;
-        shareButton.textContent = urlToCopy === longUrl ? '✓ Copied!' : '✓ Copied short link!';
+        shareButton.textContent = '✓ Copied!';
         shareButton.classList.add('copied');
       } catch {
-        shareButton.textContent = '⚠ Copy failed';
-      } finally {
-        shortenPending = false;
-        shareButton.disabled = false;
-        setTimeout(() => {
-          shareButton.textContent = '🔗 Copy link';
-          if (copied) {
-            shareButton.classList.remove('copied');
-          }
-        }, 2000);
+        shareButton.textContent = '⚠ Copy failed — try selecting the URL manually';
       }
+
+      setTimeout(() => {
+        shareButton.textContent = '🔗 Copy link';
+        if (copied) {
+          shareButton.classList.remove('copied');
+        }
+      }, 2000);
     });
   </script>
 </body>
