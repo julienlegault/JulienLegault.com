@@ -160,6 +160,7 @@
     const BITE_RADIUS = 8;
     const GRID_SIZE = 100;
     const DURATION_VARIANCE_RANGE = 2200;
+    const PLAYBACK_SLOWDOWN_MULTIPLIER = 1.3;
     const WOBBLE_VARIANCE_SHIFT = 5;
     const WOBBLE_VARIANCE_RANGE = 3;
     const HUE_SHIFT_SHIFT = 3;
@@ -185,7 +186,7 @@
 
     const { HASH_PATTERN, hashString, encodeBites, decodeBites } = window.SandwichUtils;
 
-    // Prefer URL fragment (#<encoded_bites>) for sharing; fall back to legacy ?bites= query param.
+    // Accept both legacy fragment tokens and query-param tokens, then normalize to query params.
     const fragmentToken = window.location.hash.slice(1);
     const params = new URLSearchParams(window.location.search);
     const rawBiteToken = fragmentToken || params.get('bites') || '';
@@ -196,12 +197,13 @@
     const requestedHash = params.get('hash');
     const hash = HASH_PATTERN.test(requestedHash || '') ? requestedHash : hashString(biteToken);
 
-    // Normalize to canonical compact fragment form whenever bites were provided.
-    if (requestedBites.length && window.location.hash !== `#${biteToken}`) {
-      history.replaceState(null, '', `#${biteToken}`);
+    // Normalize to canonical compact query form whenever bites were provided.
+    const canonicalSearch = requestedBites.length ? `?bites=${encodeURIComponent(biteToken)}` : '';
+    if (requestedBites.length && window.location.search !== canonicalSearch) {
+      history.replaceState(null, '', `${window.location.pathname}${canonicalSearch}`);
     }
     const seed = parseInt(hash, 16);
-    const duration = (6 + ((seed % DURATION_VARIANCE_RANGE) / 1000)) * 1000; // in ms
+    const duration = ((6 + ((seed % DURATION_VARIANCE_RANGE) / 1000)) * PLAYBACK_SLOWDOWN_MULTIPLIER) * 1000; // in ms
     const revealWindow = duration * 0.48;
     const biteDelayStep = revealWindow / Math.max(bites.length, 1);
     const glowHue = seed % 360;
@@ -292,14 +294,15 @@
     syncCanvasSize();
 
     shareButton.addEventListener('click', async () => {
-      // Build a short share URL using g.html as a compact alias for this page.
+      // Build a share URL that carries bites in query params so unfurlers can read them.
       // Derive the base path so this works regardless of deployment subdirectory.
       const basePath = window.location.pathname.replace(/[^/]*$/, '');
-      const shortUrl = window.location.origin + basePath + 'g.html' + window.location.hash;
+      const shortUrl = new URL(`${basePath}sandwich-full-animation.html`, window.location.origin);
+      shortUrl.searchParams.set('bites', biteToken);
       let copied = false;
 
       try {
-        await navigator.clipboard.writeText(shortUrl);
+        await navigator.clipboard.writeText(shortUrl.toString());
         copied = true;
         shareButton.textContent = '✓ Copied!';
         shareButton.classList.add('copied');
