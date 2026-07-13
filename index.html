@@ -15,12 +15,19 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
       background: #0f1117;
       color: #e8e8e8;
       font-family: system-ui, -apple-system, sans-serif;
       padding: 2rem;
+    }
+
+    .page {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
 
     h1 {
@@ -86,6 +93,46 @@
       margin-bottom: 0.5rem;
     }
 
+    footer {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      margin-top: 2rem;
+    }
+
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .footer-link {
+      width: 3rem;
+      height: 3rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      border: 1px solid #2a2d3a;
+      background: #1a1d27;
+      color: #e8e8e8;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    }
+
+    .footer-link:hover,
+    .footer-link:focus-visible {
+      background: #22263a;
+      border-color: #4f6ef7;
+      transform: translateY(-2px);
+      outline: none;
+    }
+
+    .footer-link svg {
+      width: 1.5rem;
+      height: 1.5rem;
+      display: block;
+    }
+
     @media (max-width: 520px) {
       .grid {
         grid-template-columns: 1fr;
@@ -94,43 +141,70 @@
   </style>
 </head>
 <body>
-  <h1>Julien Legault</h1>
+  <main class="page">
+    <h1>Julien Legault</h1>
 
-  <div class="grid">
-    <a class="card" href="https://asmrandle.com" target="_blank" rel="noopener noreferrer">
-      <img class="card-img" src="images/asmrandle.png" alt="Asmrandle screenshot" />
-      <span class="card-title">Asmrandle</span>
-      <span class="card-desc">A Magic: the Gathering daily game</span>
-      <span class="card-url">asmrandle.com</span>
-    </a>
+    <div class="grid">
+      <a class="card" href="https://asmrandle.com" target="_blank" rel="noopener noreferrer">
+        <img class="card-img" src="images/asmrandle.png" alt="Asmrandle screenshot" />
+        <span class="card-title">Asmrandle</span>
+        <span class="card-desc">A Magic: the Gathering daily game</span>
+        <span class="card-url">asmrandle.com</span>
+      </a>
 
-    <a class="card" href="https://mtgdailygames.com" target="_blank" rel="noopener noreferrer">
-      <img class="card-img" src="images/mtgdailygames.png" alt="MTG Daily Games screenshot" />
-      <span class="card-title">MTG Daily Games</span>
-      <span class="card-desc">A collection of Magic: the Gathering daily games from across the web</span>
-      <span class="card-url">mtgdailygames.com</span>
-    </a>
+      <a class="card" href="https://mtgdailygames.com" target="_blank" rel="noopener noreferrer">
+        <img class="card-img" src="images/mtgdailygames.png" alt="MTG Daily Games screenshot" />
+        <span class="card-title">MTG Daily Games</span>
+        <span class="card-desc">A collection of Magic: the Gathering daily games from across the web</span>
+        <span class="card-url">mtgdailygames.com</span>
+      </a>
 
-    <a class="card" href="https://pick3slop.com" target="_blank" rel="noopener noreferrer">
-      <img class="card-img" src="images/pick3slop.png" alt="Pick 3 Slop screenshot" />
-      <span class="card-title">Pick 3 Slop</span>
-      <span class="card-desc">A rogue-like browser game</span>
-      <span class="card-url">pick3slop.com</span>
-    </a>
+      <a class="card" href="https://pick3slop.com" target="_blank" rel="noopener noreferrer">
+        <img class="card-img" src="images/pick3slop.png" alt="Pick 3 Slop screenshot" />
+        <span class="card-title">Pick 3 Slop</span>
+        <span class="card-desc">A rogue-like browser game</span>
+        <span class="card-url">pick3slop.com</span>
+      </a>
 
-    <a class="card" href="https://priciestprinting.com" target="_blank" rel="noopener noreferrer">
-      <img class="card-img" src="images/priciestprinting.png" alt="Priciest Printing screenshot" />
-      <span class="card-title">Priciest Printing</span>
-      <span class="card-desc">A Magic: the Gathering daily game </span>
-      <span class="card-url">priciestprinting.com</span>
-    </a>
+      <a class="card" href="https://priciestprinting.com" target="_blank" rel="noopener noreferrer">
+        <img class="card-img" src="images/priciestprinting.png" alt="Priciest Printing screenshot" />
+        <span class="card-title">Priciest Printing</span>
+        <span class="card-desc">A Magic: the Gathering daily game </span>
+        <span class="card-url">priciestprinting.com</span>
+      </a>
 
-    <a class="card" href="sandwich-bite-test.html">
-      <img class="card-img" src="images/sandwich-bite-test.svg" alt="Sandwich Bite Test preview" />
-      <span class="card-title">Sandwich Bite Test</span>
-      <span class="card-desc">Choose the next bite and see how you would eat the sandwich</span>
-      <span class="card-url">sandwich-bite-test.html</span>
-    </a>
-  </div>
+      <a class="card" href="sandwich-bite-test.html">
+        <img class="card-img" src="images/sandwich-bite-test.svg" alt="Sandwich Bite Test preview" />
+        <span class="card-title">Sandwich Bite Test</span>
+        <span class="card-desc">Choose the next bite and see how you would eat the sandwich</span>
+        <span class="card-url">sandwich-bite-test.html</span>
+      </a>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-links" aria-label="Contact links">
+      <a class="footer-link" href="mailto:julien.p.legault@gmail.com" aria-label="Email Julien">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#EA4335" d="M2 6.75A2.75 2.75 0 0 1 4.75 4h14.5A2.75 2.75 0 0 1 22 6.75v10.5A2.75 2.75 0 0 1 19.25 20H4.75A2.75 2.75 0 0 1 2 17.25V6.75Z"/>
+          <path fill="#fff" d="M4.8 6h14.4L12 11.54 4.8 6Z"/>
+          <path fill="#C5221F" d="M4 7.12v10.13l5.8-5.68L4 7.12Z"/>
+          <path fill="#FBBC04" d="M20 7.12v10.13l-5.8-5.68L20 7.12Z"/>
+          <path fill="#34A853" d="M19.2 18H4.8l5.9-5.78L12 13.24l1.3-1.02L19.2 18Z"/>
+        </svg>
+      </a>
+      <a class="footer-link" href="https://github.com/julienlegault" target="_blank" rel="noopener noreferrer" aria-label="Julien on GitHub">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor" d="M12 .5C5.65.5.5 5.66.5 12.02c0 5.1 3.3 9.43 7.89 10.96.58.1.8-.25.8-.57v-2.23c-3.21.7-3.89-1.38-3.89-1.38-.53-1.34-1.28-1.7-1.28-1.7-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.56-.29-5.25-1.28-5.25-5.7 0-1.26.45-2.3 1.2-3.1-.12-.3-.52-1.5.12-3.12 0 0 .98-.31 3.2 1.18a11.2 11.2 0 0 1 5.82 0c2.22-1.5 3.2-1.18 3.2-1.18.64 1.62.24 2.82.12 3.12.75.8 1.2 1.84 1.2 3.1 0 4.43-2.7 5.4-5.27 5.69.42.36.8 1.06.8 2.15v3.18c0 .32.21.68.81.57A11.52 11.52 0 0 0 23.5 12C23.5 5.66 18.34.5 12 .5Z"/>
+        </svg>
+      </a>
+      <a class="footer-link" href="https://www.linkedin.com/in/julienplegault" target="_blank" rel="noopener noreferrer" aria-label="Julien on LinkedIn">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#0A66C2" d="M3 2.5A1.5 1.5 0 0 0 1.5 4v16A1.5 1.5 0 0 0 3 21.5h18a1.5 1.5 0 0 0 1.5-1.5V4A1.5 1.5 0 0 0 21 2.5H3Z"/>
+          <path fill="#fff" d="M6.34 9.3H9.1V18H6.34V9.3Zm1.38-4.3a1.6 1.6 0 1 1 0 3.2 1.6 1.6 0 0 1 0-3.2Zm3.1 4.3h2.65v1.18h.04c.37-.7 1.27-1.43 2.62-1.43 2.8 0 3.32 1.84 3.32 4.23V18h-2.76v-4.2c0-1-.02-2.3-1.4-2.3-1.4 0-1.61 1.1-1.61 2.23V18h-2.76V9.3Z"/>
+        </svg>
+      </a>
+    </div>
+  </footer>
 </body>
 </html>
