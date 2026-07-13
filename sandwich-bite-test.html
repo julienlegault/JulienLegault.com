@@ -539,7 +539,7 @@
       statusCopy.textContent = 'Your bite path has been hashed into a plate GIF.';
       hashNote.textContent = `GIF seed #${hash}`;
 
-      rewardLink.href = `sandwich-full-animation.html?bites=${encodeURIComponent(encodedBites)}&hash=${hash}`;
+      rewardLink.href = `sandwich-full-animation.html#${encodedBites}`;
       rewardLink.textContent = `Watch plate GIF #${hash}`;
       rewardLink.hidden = false;
 
