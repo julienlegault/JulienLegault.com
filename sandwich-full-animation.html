@@ -160,6 +160,7 @@
     const BITE_RADIUS = 8;
     const GRID_SIZE = 100;
     const DURATION_VARIANCE_RANGE = 2200;
+    const PLAYBACK_SPEED_MULTIPLIER = 1.3;
     const WOBBLE_VARIANCE_SHIFT = 5;
     const WOBBLE_VARIANCE_RANGE = 3;
     const HUE_SHIFT_SHIFT = 3;
@@ -202,7 +203,7 @@
       history.replaceState(null, '', `${window.location.pathname}${canonicalSearch}`);
     }
     const seed = parseInt(hash, 16);
-    const duration = ((6 + ((seed % DURATION_VARIANCE_RANGE) / 1000)) * 1.3) * 1000; // in ms
+    const duration = ((6 + ((seed % DURATION_VARIANCE_RANGE) / 1000)) * PLAYBACK_SPEED_MULTIPLIER) * 1000; // in ms
     const revealWindow = duration * 0.48;
     const biteDelayStep = revealWindow / Math.max(bites.length, 1);
     const glowHue = seed % 360;
